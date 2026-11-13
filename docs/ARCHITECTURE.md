@@ -28,13 +28,19 @@ Resources require a five-minute HMAC capability binding URL, type and initiating
 
 ## Abuse controls
 
-Production (`VERCEL` or `NODE_ENV=production`) requires a shared access key and a server signing secret, neither embedded in source. Page requests require the access key. Signed resource requests cannot be used to choose arbitrary new URLs. Production rate limits use Redis atomic increments in one-minute buckets: 20 page requests and 200 resources per IP. IP bucket identifiers are HMAC pseudonyms and expire after 70 seconds. A missing or unavailable production limiter prevents remote requests. Operators must also use provider quotas to cap total costs; IP limits do not defeat botnets or stolen keys.
+Production requires a server-only signing secret and a working Redis limiter. In public preview mode, `POST /api/session` issues a fifteen-minute signed browsing capability only to a configured browser origin. Its client binding is a keyed pseudonym of the provider-supplied IP. Tokens stay only in browser memory. Access checks require the session capability type and client binding; image capabilities cannot authorise browsing. An optional owner access key disables guest issuance for private deployments.
 
-The access key is intended for a small authorised preview group. Broad public operation needs individual credentials, key rotation, per-account quotas and a stronger operational security review. CORS is an origin restriction for browser access, not authentication.
+Origins are checked and CORS is restricted, but an Origin header is not proof of a human identity and can be forged by a non-browser client. The service is a deliberately public, constrained document renderer: only public HTTP(S) GET requests, bounded responses, sanitised HTML, and signed image/font delivery are supported. It does not accept arbitrary methods, destination credentials, caller-selected headers or arbitrary raw proxy responses.
+
+Redis atomic increments enforce 20 page requests and 200 resources per IP per minute, 5 session issuances per minute, and a global 2,000-request daily quota. Per-IP bucket identifiers expire after 70 seconds; anonymous daily counts expire within 48 hours. Missing or failed production rate limiting blocks requests. Platform limits and these quotas reduce abuse exposure; they are not a guarantee against coordinated attacks.
+
+The production Redis integration provisions `KV_REST_API_URL` and `KV_REST_API_TOKEN`. External Upstash REST variable names are also supported. The database contains counters, not browsing-history records.
+
+The host's loader rejected CommonJS `require()` of the maintained sanitizer's ESM parser even after Node 24 was selected. The build now bundles that dependency tree into CommonJS, preserving the current patched parser. Unit tests run with require(ESM) disabled to exercise this deployment compatibility requirement.
 
 ## Free-tier assessment, checked 13 November 2026
 
-Vercel's published Node limits include 2 GB Hobby memory, up to 300 seconds with Fluid Compute and a 250 MB uncompressed bundle limit; nonstreamed bodies are capped at 4.5 MB. This app sets a 60-second function duration and keeps returned documents below that payload cap. Chromium's actual traced bundle and cold start must be verified during deployment, which has not succeeded yet. No claim that a Chromium deployment has passed Vercel's bundle checks is made.
+Vercel's published Node limits include 2 GB Hobby memory, up to 300 seconds with Fluid Compute and a 250 MB uncompressed bundle limit; nonstreamed bodies are capped at 4.5 MB. This app sets a 60-second function duration and keeps returned documents below that payload cap. Production deployment and Chromium snapshot execution were verified on Vercel on 13 November 2026. Future dependency changes must still respect the bundle, memory and execution limits.
 
 Cloudflare Browser Run is an alternative managed engine: published Workers Free allowance is 10 minutes/day with three concurrent sessions, and a 60-second browser timeout. This is suitable for a small demonstration, not unlimited public browsing. It requires a separately configured account and service credentials. Browserless also has a limited free service; it is not silently substituted here. Chromium runs locally or in the intended Vercel Function when configured.
 

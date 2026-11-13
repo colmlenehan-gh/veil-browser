@@ -12,7 +12,7 @@ Bookmarks and rendering/search/backend preferences are stored in this browser's 
 
 Public previews issue short-lived browser-session tokens bound to the allowed frontend origin and a keyed IP pseudonym. Tokens remain only in current page memory. No user account or persistent identifier is created.
 
-Rate limiting stores an anonymous global daily count and a keyed pseudonymous IP bucket with a roughly 70-second expiry. It does not contain browsing history. Redis and hosting providers may separately process connection metadata.
+Rate limiting stores an anonymous global daily count and a keyed pseudonymous IP bucket with a roughly 70-second expiry for the per-IP bucket; global daily counters expire within 48 hours. It does not contain browsing history. Redis and hosting providers may separately process connection metadata.
 
 No advertising trackers or third-party analytics are included. There are no external fonts. Remote pages and their scripts, when run in server Chromium, may contact advertising/tracking domains from the backend. Veil is not a content-blocking guarantee. Scripts never execute within the user's retrieved-document viewport; only Veil's constrained navigation bridge does.
 

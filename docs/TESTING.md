@@ -27,6 +27,18 @@ Local tests also confirmed that bundled Chromium executes a controlled script th
 
 Later commits repeat the workflow for final UI and request-budget improvements; consult their actual run results for those revisions. The successful run above establishes the core architecture. A successful runner does not establish Vercel bundle compatibility, production credentials or production API health.
 
-## Unresolved deployment gate
+## Production verification, 13 November 2026
 
-Vercel project creation returned HTTP 403 because the connected integration cannot create the project. No Vercel deployment exists, and no production backend URL has been tested. Backend access/signing secrets and distributed Redis rate limiting must be configured before production browsing can operate.
+Both the GitHub Pages shell and the Vercel production service were tested in an actual browser. Verified observations:
+
+- A public external HTML document displayed inside Veil while the main tab remained on the Veil URL.
+- CSS and an image rendered from the remote fixture; the image's actual source origin was the Vercel resource endpoint.
+- Relative-link navigation and GET form submission remained inside Veil.
+- The production Chromium function executed the fixture script and returned `JavaScript executed remotely` in its snapshot.
+- GitHub's public page rendered through Veil despite its X-Frame-Options header.
+- The link-local metadata destination was rejected with `Private or reserved destinations are blocked`.
+- Bing results rendered in both HTML and Chromium modes. Brave returned HTTP 429. Bing's encoded result links are handled without relying on its JavaScript-only redirect.
+
+The production runtime initially failed when loading the sanitizer's ESM parser through the host's CommonJS loader. The maintained dependency tree is now bundled for compatibility. The test command disables require(ESM), and all security tests still pass. The engine remains Node.js 24.
+
+The successful bundled-build workflow is https://github.com/colmlenehan-gh/veil-browser/actions/runs/43405429730. Later source changes repeat the workflow. Current tests include browser-session binding, Marketplace Redis aliases, the daily quota and safe Bing result URL handling in addition to the original security cases.

@@ -1,37 +1,49 @@
-# Deployment instructions
+# Deployment
 
-## Status
+## Verified deployment
 
-The public repository was created and Pages was enabled. Pages publication and all three verification jobs succeeded in run https://github.com/colmlenehan-gh/veil-browser/actions/runs/43398734955. Vercel creation was denied with HTTP 403 by the existing integration. There is no verified Vercel backend deployment or live end-to-end production browsing result.
+- Frontend: https://colmlenehan-gh.github.io/veil-browser/
+- Backend / alternate frontend: https://veil-browser-omega.vercel.app/
+- Source: https://github.com/colmlenehan-gh/veil-browser
 
-## Backend
+Vercel project creation through the API connection returned 403. The operator completed secure dashboard sign-in and verification; the project was imported and deployed through the dashboard instead. Upstash terms were accepted with explicit user consent. The free `veil-rate-limits` database is connected to production. No paid plan was selected.
 
-1. Connect a Vercel account/team that permits creating projects. Import `colmlenehan-gh/veil-browser`. Select framework Other, root directory repository root, install command `npm ci`, empty build command, output directory `public`. Keep `api/` as Vercel Node Functions. The project already includes `vercel.json`.
-2. Use an eligible free/personal plan if the application remains non-commercial. Do not activate paid usage without making that decision explicitly.
-3. Provision an Upstash-compatible Redis REST database with a suitable free allowance and no paid overages, or bring an existing compatible database. The limiter needs `INCR` and `EXPIRE` via `/pipeline`. No data model or persistent browsing history is stored.
-4. Set server environment variables in the Vercel dashboard. Generate strong random values for `VEIL_ACCESS_KEY` and `VEIL_SIGNING_SECRET` (at least 32 random bytes each). Do not commit them. Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`. Set `VEIL_API_ORIGIN` to the exact HTTPS backend origin, without a path. Set `VEIL_ALLOWED_ORIGINS` to `https://colmlenehan-gh.github.io,https://YOUR-BACKEND.vercel.app`.
-5. Deploy. Inspect logs for missing dependencies and Chromium bundle/cold-start failures. The Chromium binary is included through `@sparticuz/chromium`, and launch is lazy. Do not declare success before HTML and Chromium smoke tests pass on the deployment.
-6. If Vercel Deployment Protection is enabled, configure a deliberately accessible production API suitable for the intended audience. A GitHub Pages cross-origin client cannot pass a Vercel login wall using the Veil access key. Do not embed a Vercel protection-bypass secret in frontend code.
-7. In Veil Settings, enter the backend origin and Veil access key. The key stays only in current page memory. The origin and rendering/search preferences persist locally. Only enter a key for a backend you control and trust.
-8. To preconfigure the frontend origin for everyone, edit `public/config.js` with the non-secret backend origin and commit. Never place access keys or Redis credentials in frontend files.
+## Runtime and build
 
-## Frontend
+Use Node.js 24, framework Other, repository root, output directory `public`, and the committed `vercel.json`. `npm ci` invokes the postinstall build. `npm run build` bundles the maintained sanitizer and its ESM parser into `lib/generated/sanitize.cjs` for compatibility with the host's CommonJS loader. That generated file is not committed. The parser is not downgraded. Unit tests run with require(ESM) disabled to detect regressions in that compatibility path.
 
-Pages uses the `.github/workflows/pages.yml` workflow. It runs unit/interface checks, uploads `public/`, and deploys via GitHub Pages. Set Pages source to GitHub Actions. Public frontend URL: `https://colmlenehan-gh.github.io/veil-browser/` (use the observed deployment status before calling it live).
+Pushes to `main` deploy the Vercel project. GitHub Actions verifies the frontend, deploys Pages and runs real-network integration checks. No Vercel access token is embedded in source or workflows.
 
-If workflow publishing is unavailable to an integration, upload the source using GitHub with Actions workflow write permission. Do not omit checks and call the project verified.
+## Required production environment
 
-## Production verification
+| Variable                               | Purpose                                                                           |
+| -------------------------------------- | --------------------------------------------------------------------------------- |
+| `VEIL_SIGNING_SECRET`                  | Strong randomly generated server-only signing secret, stored as a secret variable |
+| `VEIL_API_ORIGIN`                      | Exact production backend origin without a trailing slash                          |
+| `VEIL_ALLOWED_ORIGINS`                 | Comma-separated allowed frontend origins                                          |
+| `VEIL_GUEST_ACCESS`                    | `1` for automatic preview sessions                                                |
+| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | Automatically provisioned Redis REST credentials                                  |
 
-- Load example.com in HTML mode and verify the main URL remains on Pages.
-- Verify CSS, images, relative links and a GET form against `/fixtures/` on Pages.
-- Enable Chromium and verify the fixture says `JavaScript executed remotely`.
-- Retrieve github.com, which normally supplies X-Frame-Options, through HTML mode. Sites may reject automated fetches, so record actual status.
-- Confirm no client request goes to a destination host. Only Pages and your backend should receive network requests.
-- Verify missing access key = 401; private URL = 403; bad capability = 403; exceeded limits = 429; absent rate-limiter configuration = 503.
-- Test both normal and private tabs, closing/reopening, viewport resizing and resource expiry.
-- Check hosting logs and configure retention and spending limits. Application code avoids destination logging; host-level records remain outside the application's control.
+`UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are supported aliases for an external compatible database. An optional `VEIL_ACCESS_KEY` switches to private shared-key operation and disables guest session issuance. Keep all credential values out of frontend files, screenshots and source control.
 
-## Failure recovery
+The current allowed origins are the GitHub Pages account origin and the exact Vercel production origin. Configure production API access deliberately: an unrelated provider sign-in wall cannot be crossed using a Veil session token.
 
-If the API is unavailable, the shell displays a retrieval error and does not fall back to external navigation. To revoke resource links, rotate the signing secret. To revoke page access, rotate the access key and notify authorised users separately. Deleting Redis credentials causes fail-closed behaviour. Revert a bad frontend using GitHub commit history and redeploy; use Vercel's deployment rollback for the backend.
+## Service limits
+
+Each IP may issue 20 page requests, 200 resource requests and 5 session requests per minute. All successful limiter admissions also count towards the shared 2,000-request UTC-day quota. Redis errors or missing production configuration prevent remote requests. This small free preview quota is not an unlimited service promise.
+
+The installed Upstash free plan showed 500,000 monthly commands. Each limiter check uses four commands. The application's daily cap helps keep this preview within that allowance; other uses of the same database and provider-policy changes must still be considered. Do not upgrade to paid usage automatically.
+
+## Smoke tests
+
+1. Load a public HTML page through Pages and confirm the main address stays on Pages.
+2. Load `/fixtures/`, verify the image comes from the Vercel resource endpoint, follow a relative link and submit a GET form.
+3. Select Chromium and confirm `JavaScript executed remotely` appears.
+4. Retrieve GitHub, which sends X-Frame-Options, through the backend.
+5. Verify private/reserved destinations return a blocked-destination error.
+6. Verify search results and destination links through the selected engine. Third-party engines may block automated requests.
+7. Check recent runtime logs for new errors. Earlier failed deployments may retain historical errors and are not evidence that the current deployment is unhealthy.
+
+## Recovery
+
+Rotate the signing secret to revoke all active sessions and resource capabilities. Set an owner access key to require private access. Missing Redis credentials cause fail-closed behaviour. Revert a bad Git commit or use the normal Vercel rollback controls. Resource capabilities expire after five minutes; browser sessions after fifteen minutes.

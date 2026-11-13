@@ -4,11 +4,13 @@ A web interface backed by **remote HTTP retrieval** and optional **server-side C
 
 ## Current delivery status
 
-- Source is published and the frontend has deployed successfully to GitHub Pages: https://colmlenehan-gh.github.io/veil-browser/
-- The Vercel backend project was deployed through the authenticated dashboard on 13 November 2026 at https://veil-browser-omega.vercel.app. The API connection still lacks project access.
-- Production browsing is **not enabled yet**: Redis provisioning requires the operator to accept the Marketplace/Upstash terms, and server access/signing secrets and allowed origins still need configuration. The backend fails closed until configuration is complete. The frontend now has the deployed backend origin preconfigured.
-- Ten security tests pass. The GitHub-hosted UI and ten real-network integration checks passed, including remote JavaScript execution, HTML/CSS/images, X-Frame-Options handling, and actual backend-to-browser rendering with no client destination requests. The tested run is https://github.com/colmlenehan-gh/veil-browser/actions/runs/43398734955. This is runner verification, not a Vercel production deployment.
-- Supabase is intentionally unused. No accounts or server-side history database are required.
+- Live frontend: https://colmlenehan-gh.github.io/veil-browser/
+- Live backend and alternative app URL: https://veil-browser-omega.vercel.app/
+- Production remote HTML, CSS/images, relative links, GET forms, remote Chromium JavaScript snapshots, and private-destination blocking were verified in the live browser on 13 November 2026.
+- Public preview sessions are issued automatically, held only in memory and restricted to configured origins and the requesting client. Redis enforces per-IP limits and a global 2,000-request daily service quota. There is no shared secret embedded in the frontend.
+- Bing is the default search engine. Brave returned HTTP 429 during production testing. Third-party search availability is not guaranteed.
+- Supabase is unused. No accounts or server-side browsing-history database are required.
+- Node.js 24 and the bundled maintained sanitizer are required for the deployed runtime. See the verification record for runner and production evidence.
 
 ## How remote browsing works
 
@@ -27,7 +29,7 @@ Address/search bar; in-memory multiple tabs and history; back, forward, reload a
 
 ## Run locally
 
-Requires Node 22.17+ or 24+, npm, and a Chromium/Chrome installation for snapshot mode. On Linux, the default executable is `/usr/bin/chromium`. On other systems set `CHROMIUM_EXECUTABLE_PATH` to the full browser executable path. Windows example: `C:\Program Files\Google\Chrome\Application\chrome.exe`.
+Requires Node.js 24, npm, and a Chromium/Chrome installation for snapshot mode. On Linux, the default executable is `/usr/bin/chromium`. On other systems set `CHROMIUM_EXECUTABLE_PATH` to the full browser executable path. Windows example: `C:\Program Files\Google\Chrome\Application\chrome.exe`.
 
 ```sh
 npm ci
@@ -46,7 +48,7 @@ npm run test:live  # start app first; needs public internet and deployed fixture
 
 See [deployment instructions](docs/DEPLOYMENT.md), [architecture](docs/ARCHITECTURE.md), [privacy policy](docs/PRIVACY.md), [test record](docs/TESTING.md), and [limitations](docs/LIMITATIONS.md).
 
-Do not expose the backend without an access key, signing secret, distributed rate limiter and provider spending controls. The app is not anonymously open to the public: users need the operator's access key. Keys are kept only in memory in the shell.
+Production requires a signing secret and distributed Redis rate limiter. Set `VEIL_GUEST_ACCESS=1` for automatic short-lived preview sessions, or configure `VEIL_ACCESS_KEY` for a private deployment. The renderer supports only bounded GET requests and sanitised document delivery, not arbitrary methods, credentials or raw proxy responses.
 
 ## Licence
 

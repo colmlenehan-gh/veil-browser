@@ -261,3 +261,27 @@ test("Marketplace Redis aliases enforce global daily quota and fail closed", asy
       else process.env[name] = saved[name];
   }
 });
+
+test("Bing destination links resolve safely without a JavaScript redirect", async () => {
+  const { navigationURL } = await import("../lib/render.js");
+  const encode = (value) =>
+    "https://www.bing.com/ck/a?u=a1" + Buffer.from(value).toString("base64url");
+  assert.equal(
+    navigationURL(encode("https://www.w3.org/"), "https://www.bing.com/search"),
+    "https://www.w3.org/",
+  );
+  assert.equal(
+    navigationURL(
+      encode("http://127.0.0.1/private"),
+      "https://www.bing.com/search",
+    ),
+    null,
+  );
+  assert.equal(
+    navigationURL(
+      "https://other.example/ck/a?u=a1abc",
+      "https://www.bing.com/search",
+    ),
+    "https://other.example/ck/a?u=a1abc",
+  );
+});

@@ -14,7 +14,7 @@ const write = (key, value) => {
 };
 let settings = read("veil:settings", {
   mode: "html",
-  engine: "brave",
+  engine: "bing",
   backend: "",
 });
 let bookmarks = read("veil:bookmarks", []);
@@ -98,7 +98,7 @@ function normalise(text) {
     bing: "https://www.bing.com/search?q=",
     duckduckgo: "https://html.duckduckgo.com/html/?q=",
   };
-  return (engines[settings.engine] || engines.brave) + encodeURIComponent(text);
+  return (engines[settings.engine] || engines.bing) + encodeURIComponent(text);
 }
 function backend() {
   if (
