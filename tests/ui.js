@@ -14,7 +14,7 @@ try {
   await page.route("**/api/browse", async (route) => {
     requests++;
     const { url } = route.request().postDataJSON();
-    const html = `<h1>${url.endsWith("/next") ? "Second page" : "Remote fixture"}</h1><a href="/next">Next page</a><form action="/search"><input name="q" value="test"><button>Search</button></form><script>parent.document.body.innerHTML='unsafe'</script>`;
+    const html = `<h1>${url.endsWith("/next") ? "Second page" : "Remote fixture"}</h1><p>Retrieval ${requests}</p><a href="/next">Next page</a><form action="/search"><input name="q" value="test"><button>Search</button></form><script>parent.document.body.innerHTML='unsafe'</script>`;
     const result = await processHTML(html, url, "http://localhost:3000");
     await route.fulfill({ json: result });
   });
@@ -32,16 +32,14 @@ try {
       .waitFor({ timeout: 10000 });
   } catch (e) {
     console.log(
-      await page
-        .locator("#page")
-        .evaluate((el) => ({
-          hidden: el.hidden,
-          rect: el.getBoundingClientRect().toJSON(),
-          style: getComputedStyle(el).cssText,
-          parent: el.parentElement.getBoundingClientRect().toJSON(),
-          body: document.body.getBoundingClientRect().toJSON(),
-          html: document.documentElement.outerHTML.slice(0, 1500),
-        })),
+      await page.locator("#page").evaluate((el) => ({
+        hidden: el.hidden,
+        rect: el.getBoundingClientRect().toJSON(),
+        style: getComputedStyle(el).cssText,
+        parent: el.parentElement.getBoundingClientRect().toJSON(),
+        body: document.body.getBoundingClientRect().toJSON(),
+        html: document.documentElement.outerHTML.slice(0, 1500),
+      })),
     );
     await page.screenshot({ path: "test-results/failure.png" });
     throw e;
@@ -51,6 +49,22 @@ try {
     "https://example.com/next",
   );
   assert.equal(page.url(), "http://localhost:3000/");
+  await page.locator("#back").click();
+  await frame.getByText("Remote fixture", { exact: true }).waitFor();
+  await page.locator("#forward").click();
+  await frame.getByText("Second page", { exact: true }).waitFor();
+  await page.locator("#back").click();
+  await frame.getByText("Remote fixture", { exact: true }).waitFor();
+  await page.locator("#reload").click();
+  await frame.getByText("Retrieval 3", { exact: true }).waitFor();
+  await frame.locator('input[name="q"]').fill("hello");
+  await frame.getByText("Search", { exact: true }).click();
+  await page.waitForFunction(
+    () =>
+      document.getElementById("address").value ===
+      "https://example.com/search?q=hello",
+  );
+  await frame.getByText("Retrieval 4", { exact: true }).waitFor();
   await page.locator("#back").click();
   await frame.getByText("Remote fixture", { exact: true }).waitFor();
   await page.locator("#bookmark").click();
