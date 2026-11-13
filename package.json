@@ -18,5 +18,8 @@
     "postcss": "8.5.32",
     "postcss-value-parser": "4.2.0",
     "sanitize-html": "2.18.2"
+  },
+  "engines": {
+    "node": "24.x"
   }
 }

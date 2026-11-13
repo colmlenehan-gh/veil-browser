@@ -20,6 +20,16 @@ let settings = read("veil:settings", {
 let bookmarks = read("veil:bookmarks", []);
 let accessKey = "";
 let browserSession = null;
+async function responseData(response) {
+  try {
+    return await response.json();
+  } catch {
+    throw Error(
+      `The browser service is temporarily unavailable (HTTP ${response.status}). Please try again shortly.`,
+    );
+  }
+}
+
 async function credentials(signal) {
   if (accessKey) return accessKey;
   if (["localhost", "127.0.0.1"].includes(location.hostname)) return "";
@@ -33,7 +43,7 @@ async function credentials(signal) {
     referrerPolicy: "no-referrer",
     signal,
   });
-  const data = await response.json();
+  const data = await responseData(response);
   if (!response.ok)
     throw Error(data.error || "The browser service is not ready yet.");
   browserSession = {
@@ -142,7 +152,7 @@ async function load(t, entry) {
       cache: "no-store",
       referrerPolicy: "no-referrer",
     });
-    const data = await response.json();
+    const data = await responseData(response);
     if (!response.ok) throw Error(data.error || "Remote retrieval failed.");
     if (gen !== t.generation) return;
     Object.assign(entry, { url: data.url, title: data.title, document: data });
