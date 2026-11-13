@@ -8,11 +8,11 @@ Destination links have no `href`. They carry validated HTTP(S) destinations in d
 
 ## Rendering modes
 
-| Mode | Retrieval | JavaScript | Result |
-| --- | --- | --- | --- |
-| HTML | Node HTTP(S) client | No destination scripts execute | Sanitised document and retrieved CSS/assets |
-| Chromium | Node fetch plus intercepted Chromium requests | Executes remotely for an initial snapshot | Sanitised DOM snapshot, no continuing JS session |
-| Full remote interactive browser | Not implemented | Would need persistent isolated sessions, input events and a streaming viewport | Not claimed |
+| Mode                            | Retrieval                                     | JavaScript                                                                     | Result                                           |
+| ------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------ |
+| HTML                            | Node HTTP(S) client                           | No destination scripts execute                                                 | Sanitised document and retrieved CSS/assets      |
+| Chromium                        | Node fetch plus intercepted Chromium requests | Executes remotely for an initial snapshot                                      | Sanitised DOM snapshot, no continuing JS session |
+| Full remote interactive browser | Not implemented                               | Would need persistent isolated sessions, input events and a streaming viewport | Not claimed                                      |
 
 Chromium uses a fresh browser/context per request, blocks service workers and WebSockets, rejects non-GET network requests, and routes network loads through the pinned fetcher. Its configured network proxy is a closed loopback port; requests not fulfilled by interception should fail instead of directly reaching destinations. Contexts, cookies and local storage are discarded on close. Browser operations stop after their deadline and close in a finally block. Browser launch uses the serverless Chromium package on Vercel and the configured local executable elsewhere.
 
@@ -41,6 +41,7 @@ Cloudflare Browser Run is an alternative managed engine: published Workers Free 
 GitHub Pages serves the static frontend and provides no Node backend. Published limits include a 1 GB site and a soft 100 GB/month bandwidth limit. It is not intended for commercial SaaS or sensitive transactions. Vercel Hobby is for eligible personal, non-commercial use. Verify plan terms before changing the project into a commercial product. Redis free allowances vary by provider and were not provisioned here; the app does not assume an unlimited Redis tier.
 
 Sources:
+
 - https://vercel.com/docs/functions/limitations
 - https://vercel.com/docs/plans/hobby
 - https://developers.cloudflare.com/browser-run/pricing/
