@@ -15,7 +15,7 @@ const write = (key, value) => {
 let settings = read("veil:settings", {
   mode: "html",
   engine: "brave",
-  backend: DEFAULT_API_ORIGIN,
+  backend: "",
 });
 let bookmarks = read("veil:bookmarks", []);
 let accessKey = "";
@@ -67,9 +67,9 @@ function normalise(text) {
   return (engines[settings.engine] || engines.brave) + encodeURIComponent(text);
 }
 function backend() {
-  const configured = settings.backend || DEFAULT_API_ORIGIN;
-  if (!configured && ["localhost", "127.0.0.1"].includes(location.hostname))
+  if (!settings.backend && ["localhost", "127.0.0.1"].includes(location.hostname))
     return location.origin;
+  const configured = settings.backend || DEFAULT_API_ORIGIN;
   try {
     const u = new URL(configured);
     if (
@@ -290,7 +290,7 @@ $("private").onclick = () => newTab(true);
 $("privacy").onclick = () => $("privacydialog").showModal();
 $("settings").onclick = () => {
   for (const key of ["mode", "engine", "backend"])
-    $(key).value = settings[key] || "";
+    $(key).value = settings[key] || (key === "backend" ? DEFAULT_API_ORIGIN : "");
   $("accesskey").value = accessKey;
   $("settingsdialog").showModal();
 };
