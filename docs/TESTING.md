@@ -2,20 +2,31 @@
 
 13 November 2026.
 
-## Observed locally
+## Verified cloud run
 
-Eight unit/security tests passed initially: reserved IPs, unsafe URL syntax, mixed DNS records, resource signature tampering/expiry, hostile HTML removal, relative URL/resource rewriting, unsafe CSS handling, encoding, and production fail-closed configuration (some grouped in one test). Additional tests may be added; the current test runner output is authoritative.
+https://github.com/colmlenehan-gh/veil-browser/actions/runs/43398734955
 
-The workspace's public DNS lookup for example.com returned EAI_AGAIN. Local Chromium startup failed because the workspace disallows its required socket operation. Therefore no claim of local external-network or visual-browser success is made.
+The verification job, Pages deployment job, and remote-verification job all completed successfully. The run verified:
 
-## Reproducible automated checks
+1. Ten security unit tests, including a mocked pinned-transport test proving private redirect targets are rejected before a second connection.
+2. Interface flow in actual Chrome: isolated processed documents, stable main URL, internal navigation and history, bookmarks, private-tab restrictions, and phone/tablet layout bounds.
+3. Ten real-network integration checks: static HTML; linked CSS/images/relative links and GET form processing; remote Chromium JavaScript execution and script removal; GitHub pages with X-Frame-Options; response size rejection; actual API retrieval; SSRF rejection; unsigned resource rejection; complete browser-to-backend-to-remote-page display/navigation with no client destination traffic; and rate limiting.
+4. A separately reported JavaScript-heavy Excalidraw compatibility probe retrieved a 7,029-character snapshot. Interactive canvas editing and continuing JavaScript sessions remain unsupported. This probe is not counted as successful interactive compatibility.
 
-`npm test` tests security helpers and document processing.
+## Local verification
 
-`npm run test:ui` starts Chromium against an already running local shell with a controlled intercepted API fixture. It verifies the opaque srcdoc viewport, stable main URL, internal link navigation, back history, bookmarking, private tab restrictions and mobile/iPad layout overflow. These tests do not prove remote fetching; they specifically test the shell and isolation contract.
+Ten unit/security tests pass. The fixture-based browser UI tests also pass using the bundled headless Chromium executable. System Chromium could not start in the restricted workspace, and public DNS requests return EAI_AGAIN; those limitations were resolved for testing by the independently hosted GitHub runner. No production network restriction was weakened or removed from the application.
 
-`npm run test:live` uses the real pinned Node fetcher, actual remote resources and actual server Chromium, plus the local API. It tests static HTML, CSS/images/relative links, remote JavaScript execution, a site with X-Frame-Options, private redirects, size rejection, SSRF API errors, signed resource rejection and rate limits. The live fixture is hosted on this project's Pages site. External failures are reported as failures, not silently skipped.
+Local tests also confirmed that bundled Chromium executes a controlled script through the guarded request-interception path. That controlled fixture test is not presented as a public-network test.
 
-GitHub Actions deploys the frontend after unit and UI tests, then runs the live retrieval suite on a hosted runner. Successful tests on a GitHub runner prove that code path in that runner; they do not prove a Vercel deployment works. A production Vercel smoke test remains required.
+## Reproducing checks
 
-No tested production backend URL exists at this point. Consult the linked repository Actions results for observed cloud test and Pages deployment status.
+- `npm test`: security helpers, decoding, document/CSS processing and redirect connection validation.
+- `npm run test:ui`: against an already running local server; uses an intercepted API fixture to isolate shell behaviour. Requires Chrome/Chromium at `CHROMIUM_EXECUTABLE_PATH` or `/usr/bin/chromium`.
+- `npm run test:live`: against the running local server, with public internet and this project's deployed Pages fixtures. Performs real remote fetching and actual browser display. Set `VEIL_USE_BUNDLED_CHROMIUM=1` to exercise the serverless engine and `CHROMIUM_EXECUTABLE_PATH` for the separate client-browser check.
+
+Later commits repeat the workflow for final UI and request-budget improvements; consult their actual run results for those revisions. The successful run above establishes the core architecture. A successful runner does not establish Vercel bundle compatibility, production credentials or production API health.
+
+## Unresolved deployment gate
+
+Vercel project creation returned HTTP 403 because the connected integration cannot create the project. No Vercel deployment exists, and no production backend URL has been tested. Backend access/signing secrets and distributed Redis rate limiting must be configured before production browsing can operate.

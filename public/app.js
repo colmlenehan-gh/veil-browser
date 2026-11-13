@@ -219,7 +219,7 @@ function paint() {
   $("error").hidden = !t.error;
   $("errormessage").textContent = t.error;
   if (hasPage) {
-    if (renderedEntry !== entry) {
+    if (renderedEntry !== entry.document) {
       const viewport = document.createElement("iframe");
       viewport.id = "page";
       viewport.title = "Remotely retrieved webpage";
@@ -227,7 +227,7 @@ function paint() {
       viewport.referrerPolicy = "no-referrer";
       viewport.srcdoc = entry.document.html;
       $("page").replaceWith(viewport);
-      renderedEntry = entry;
+      renderedEntry = entry.document;
     }
   } else {
     if (renderedEntry) {
@@ -240,7 +240,13 @@ function paint() {
     : t.error
       ? "Retrieval failed"
       : entry.document?.notice ||
-        (t.private ? "Private tab · Memory only" : "Ready to explore");
+        (!settings.backend &&
+        !DEFAULT_API_ORIGIN &&
+        !["localhost", "127.0.0.1"].includes(location.hostname)
+          ? "Backend not connected · Configure in Settings"
+          : t.private
+            ? "Private tab · Memory only"
+            : "Ready to explore");
   $("modebadge").textContent =
     (t.private ? "PRIVATE · " : "") +
     (entry.document?.mode === "chromium"

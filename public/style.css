@@ -513,3 +513,22 @@ dialog p {
     font-size: 13px;
   }
 }
+
+.external-icon,
+.settings-icon {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  vertical-align: middle;
+}
+.quicklinks .external-icon,
+.homefoot .external-icon {
+  width: 10px;
+  height: 10px;
+}
+#homesearch .external-icon {
+  width: 24px;
+  height: 24px;
+}

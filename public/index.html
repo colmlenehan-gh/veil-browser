@@ -48,7 +48,14 @@
         </form>
         <button id="bookmark" aria-label="Bookmark this page">☆</button
         ><button id="bookmarks" aria-label="Bookmarks">☷</button
-        ><button id="settings" aria-label="Settings">⚙&#xfe0e;</button>
+        ><button id="settings" aria-label="Settings">
+          <svg class="settings-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path
+              d="m9 3-1 3-3 1 1 3-2 2 2 2-1 3 3 1 1 3h6l1-3 3-1-1-3 2-2-2-2 1-3-3-1-1-3Z"
+            />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </button>
       </div>
       <div class="progress" id="progress"></div>
     </header>
@@ -58,7 +65,9 @@
         <h1>The web.<br /><span>Through Veil.</span></h1>
         <p>Pages retrieved remotely.<br />A quieter place to explore.</p>
         <form id="homesearch">
-          <span>↗&#xfe0e;</span
+          <span
+            ><svg class="external-icon" aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M5 19 19 5M5 5h14v14" /></svg></span
           ><input
             id="query"
             aria-label="Search the web"
@@ -68,17 +77,34 @@
         </form>
         <div class="quicklinks">
           <button data-url="https://example.com">
-            Example<span>Start simple ↗&#xfe0e;</span></button
+            Example<span
+              >Start simple
+              <svg class="external-icon" aria-hidden="true" viewBox="0 0 24 24">
+                <path d="M5 19 19 5M5 5h14v14" /></svg
+            ></span></button
           ><button data-url="https://en.wikipedia.org/wiki/Main_Page">
-            Wikipedia<span>Follow your curiosity ↗&#xfe0e;</span></button
+            Wikipedia<span
+              >Follow your curiosity
+              <svg class="external-icon" aria-hidden="true" viewBox="0 0 24 24">
+                <path d="M5 19 19 5M5 5h14v14" /></svg
+            ></span></button
           ><button data-url="https://www.w3.org/">
-            W3C<span>Explore the open web ↗&#xfe0e;</span>
+            W3C<span
+              >Explore the open web
+              <svg class="external-icon" aria-hidden="true" viewBox="0 0 24 24">
+                <path d="M5 19 19 5M5 5h14v14" /></svg
+            ></span>
           </button>
         </div>
         <div class="homefoot">
           <span class="dot"></span> REMOTE RETRIEVAL <span>/</span> NO
           ADVERTISING TRACKERS
-          <button id="privacy">Privacy & limitations ↗&#xfe0e;</button>
+          <button id="privacy">
+            Privacy & limitations
+            <svg class="external-icon" aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M5 19 19 5M5 5h14v14" />
+            </svg>
+          </button>
         </div>
       </section>
       <iframe

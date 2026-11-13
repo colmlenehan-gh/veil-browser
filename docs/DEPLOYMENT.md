@@ -2,7 +2,7 @@
 
 ## Status
 
-The public repository was created and Pages was enabled. Check the Actions run for the actual Pages publication result. Vercel creation was denied with HTTP 403 by the existing integration. There is no verified Vercel backend deployment or live end-to-end production browsing result.
+The public repository was created and Pages was enabled. Pages publication and all three verification jobs succeeded in run https://github.com/colmlenehan-gh/veil-browser/actions/runs/43398734955. Vercel creation was denied with HTTP 403 by the existing integration. There is no verified Vercel backend deployment or live end-to-end production browsing result.
 
 ## Backend
 

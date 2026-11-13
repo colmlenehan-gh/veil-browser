@@ -130,6 +130,28 @@ await check(
         .getByText("Relative navigation works", { exact: true })
         .waitFor();
       assert.equal(page.url(), api + "/");
+      await page.locator("#back").click();
+      await page
+        .frameLocator("#page")
+        .getByText("Remote fixture", { exact: true })
+        .waitFor();
+      await page
+        .frameLocator("#page")
+        .locator('input[name="q"]')
+        .fill("secure");
+      await page
+        .frameLocator("#page")
+        .getByText("GET search", { exact: true })
+        .click();
+      await page
+        .frameLocator("#page")
+        .getByText("Relative navigation works", { exact: true })
+        .waitFor();
+      assert.equal(page.url(), api + "/");
+      assert.equal(
+        await page.locator("#address").inputValue(),
+        fixture + "next.html?q=secure",
+      );
       assert.deepEqual(
         destinations,
         [],

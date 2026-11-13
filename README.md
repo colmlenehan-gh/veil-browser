@@ -7,7 +7,7 @@ A web interface backed by **remote HTTP retrieval** and optional **server-side C
 - Source is published and the frontend has deployed successfully to GitHub Pages: https://colmlenehan-gh.github.io/veil-browser/
 - Vercel project creation was attempted on 13 November 2026 and rejected with HTTP 403: permission to create projects is unavailable to the connected integration.
 - A working public backend is **not deployed**. A frontend without a configured backend cannot browse remotely.
-- Ten security tests and the fixture-based UI flow pass locally. GitHub-hosted tests have confirmed real HTML/CSS/image retrieval and processing of a site with X-Frame-Options. The bundled Chromium engine starts locally; real-network JavaScript and the complete browser-to-backend flow are being verified by GitHub Actions. Consult the current run rather than treating test inclusion as a pass.
+- Ten security tests pass. The GitHub-hosted UI and ten real-network integration checks passed, including remote JavaScript execution, HTML/CSS/images, X-Frame-Options handling, and actual backend-to-browser rendering with no client destination requests. The tested run is https://github.com/colmlenehan-gh/veil-browser/actions/runs/43398734955. This is runner verification, not a Vercel production deployment.
 - Supabase is intentionally unused. No accounts or server-side history database are required.
 
 ## How remote browsing works
