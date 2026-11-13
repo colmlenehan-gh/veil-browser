@@ -27,6 +27,7 @@ jobs:
         run: node server.js > /tmp/veil-server.log 2>&1 &
       - run: npm run test:ui
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
         with:
           name: veil-ui-previews
           path: test-results/*.png
