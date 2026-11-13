@@ -19,6 +19,30 @@ let settings = read("veil:settings", {
 });
 let bookmarks = read("veil:bookmarks", []);
 let accessKey = "";
+let browserSession = null;
+async function credentials(signal) {
+  if (accessKey) return accessKey;
+  if (["localhost", "127.0.0.1"].includes(location.hostname)) return "";
+  const origin = backend();
+  if (browserSession?.origin === origin && browserSession.expires > Date.now())
+    return browserSession.token;
+  const response = await fetch(origin + "/api/session", {
+    method: "POST",
+    credentials: "omit",
+    cache: "no-store",
+    referrerPolicy: "no-referrer",
+    signal,
+  });
+  const data = await response.json();
+  if (!response.ok)
+    throw Error(data.error || "The browser service is not ready yet.");
+  browserSession = {
+    origin,
+    token: data.token,
+    expires: Date.now() + data.expiresIn * 1000 - 30000,
+  };
+  return data.token;
+}
 let active;
 const tabs = [];
 function current() {
@@ -67,7 +91,10 @@ function normalise(text) {
   return (engines[settings.engine] || engines.brave) + encodeURIComponent(text);
 }
 function backend() {
-  if (!settings.backend && ["localhost", "127.0.0.1"].includes(location.hostname))
+  if (
+    !settings.backend &&
+    ["localhost", "127.0.0.1"].includes(location.hostname)
+  )
     return location.origin;
   const configured = settings.backend || DEFAULT_API_ORIGIN;
   try {
@@ -102,11 +129,12 @@ async function load(t, entry) {
   if (active === t.id) paint();
   const timer = setTimeout(() => controller.abort(), 58000);
   try {
+    const token = await credentials(controller.signal);
     const response = await fetch(backend() + "/api/browse", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(accessKey ? { Authorization: "Bearer " + accessKey } : {}),
+        ...(token ? { Authorization: "Bearer " + token } : {}),
       },
       body: JSON.stringify({ url: entry.url, mode: settings.mode }),
       signal: controller.signal,
@@ -290,7 +318,8 @@ $("private").onclick = () => newTab(true);
 $("privacy").onclick = () => $("privacydialog").showModal();
 $("settings").onclick = () => {
   for (const key of ["mode", "engine", "backend"])
-    $(key).value = settings[key] || (key === "backend" ? DEFAULT_API_ORIGIN : "");
+    $(key).value =
+      settings[key] || (key === "backend" ? DEFAULT_API_ORIGIN : "");
   $("accesskey").value = accessKey;
   $("settingsdialog").showModal();
 };

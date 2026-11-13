@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import browse from "./api/browse.js";
 import resource from "./api/resource.js";
+import session from "./api/session.js";
 const root = new URL("./public/", import.meta.url).pathname;
 const server = http.createServer(async (req, res) => {
   res.status = (n) => {
@@ -34,6 +35,7 @@ const server = http.createServer(async (req, res) => {
     return browse(req, res);
   }
   if (u.pathname === "/api/resource") return resource(req, res);
+  if (u.pathname === "/api/session") return session(req, res);
   try {
     const file = path.resolve(
       root,

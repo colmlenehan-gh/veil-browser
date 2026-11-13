@@ -145,3 +145,119 @@ test("pinned transport revalidates redirect targets before connecting", async ()
     https.request = original;
   }
 });
+
+test("browser sessions bind origin, client and capability type", async () => {
+  const { createSession } = await import("../lib/security.js");
+  const names = [
+    "VEIL_GUEST_ACCESS",
+    "VEIL_ACCESS_KEY",
+    "VEIL_ALLOWED_ORIGINS",
+  ];
+  const saved = Object.fromEntries(
+    names.map((name) => [name, process.env[name]]),
+  );
+  process.env.VEIL_GUEST_ACCESS = "1";
+  delete process.env.VEIL_ACCESS_KEY;
+  process.env.VEIL_ALLOWED_ORIGINS = "https://veil.example";
+  try {
+    const request = {
+      headers: { origin: "https://veil.example" },
+      socket: { remoteAddress: "203.0.113.8" },
+    };
+    const session = createSession(request);
+    access({
+      ...request,
+      headers: { ...request.headers, authorization: "Bearer " + session.token },
+    });
+    assert.throws(() =>
+      access({
+        ...request,
+        socket: { remoteAddress: "203.0.113.9" },
+        headers: {
+          ...request.headers,
+          authorization: "Bearer " + session.token,
+        },
+      }),
+    );
+    assert.throws(() =>
+      createSession({
+        ...request,
+        headers: { origin: "https://evil.example" },
+      }),
+    );
+    assert.throws(() =>
+      access({
+        ...request,
+        headers: {
+          ...request.headers,
+          authorization:
+            "Bearer " + sign({ kind: "image", url: "https://example.com/a" }),
+        },
+      }),
+    );
+    process.env.VEIL_ACCESS_KEY = "test-only-owner-key";
+    assert.throws(() => createSession(request));
+    access({
+      ...request,
+      headers: { authorization: "Bearer test-only-owner-key" },
+    });
+  } finally {
+    for (const name of names)
+      if (saved[name] === undefined) delete process.env[name];
+      else process.env[name] = saved[name];
+  }
+});
+test("Marketplace Redis aliases enforce global daily quota and fail closed", async () => {
+  const names = [
+    "KV_REST_API_URL",
+    "KV_REST_API_TOKEN",
+    "UPSTASH_REDIS_REST_URL",
+    "UPSTASH_REDIS_REST_TOKEN",
+  ];
+  const saved = Object.fromEntries(
+    names.map((name) => [name, process.env[name]]),
+  );
+  const original = globalThis.fetch;
+  process.env.KV_REST_API_URL = "https://redis.invalid";
+  process.env.KV_REST_API_TOKEN = "test-only-token";
+  delete process.env.UPSTASH_REDIS_REST_URL;
+  delete process.env.UPSTASH_REDIS_REST_TOKEN;
+  try {
+    globalThis.fetch = async (url, options) => {
+      assert.equal(url, "https://redis.invalid/pipeline");
+      const commands = JSON.parse(options.body);
+      assert.equal(commands.length, 4);
+      return {
+        ok: true,
+        json: async () => [
+          { result: 1 },
+          { result: 1 },
+          { result: 2001 },
+          { result: 1 },
+        ],
+      };
+    };
+    await assert.rejects(
+      rateLimit({ headers: {}, socket: { remoteAddress: "203.0.113.8" } }),
+      (error) => error.status === 429,
+    );
+    globalThis.fetch = async () => ({
+      ok: true,
+      json: async () => [
+        { result: 1 },
+        { result: 1 },
+        { error: "unavailable" },
+        { result: 1 },
+      ],
+    });
+    await assert.rejects(
+      rateLimit({ headers: {} }),
+      (error) => error.status === 503,
+    );
+  } finally {
+    globalThis.fetch = original;
+    for (const name of names)
+      if (saved[name] === undefined) delete process.env[name];
+      else process.env[name] = saved[name];
+  }
+});
